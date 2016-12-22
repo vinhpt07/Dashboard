@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>NexGen DashBoard</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script src="https://d3js.org/d3.v4.min.js"></script>
+        <style>
+
+
+
+
+
+text {
+  font: bold 48px monospace;
+}
+
+.enter {
+  fill: green;
+}
+
+.update {
+  fill: #333;
+}
+
+.exit {
+  fill: brown;
+}
+
+
+
+
+
+
+    </style>
+    </head>
+
+    <body>
+        <svg width="960" height="800">
+
+        </svg>
+    </body>
+<script>
+//var alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
+//
+var data = [
+   {"percent" : 1,"color":"gray","opacity":"0.3"},
+   {"percent" : 0.5,"color":"orange","opacity":"1"}
+];
+var svg = d3.select("svg"),
+    width = +svg.attr("width"),
+    height = +svg.attr("height"),
+    g = svg.append("g").attr("transform", "translate(32," + (height / 2) + ")");
+
+    //<path id="arc1" fill="none" stroke="#446688" stroke-width="20" d="M 50 150 A 100 100 0 1 0 150 50"></path>
+    function drawCircle(x,y,radius,percent){
+        var context = d3.path();
+        context.arc(x,y,radius,percent*1.7*Math.PI,0.5*Math.PI,true);
+        return context.toString();
+    }
+    function update(){
+      var t = d3.transition()
+      .duration(750)
+      .on("start", function repeat() {
+        d3.active(this).selectAll("path").filter(":nth-child(even)")
+            .style("stroke", "purple")
+          .transition()
+            .style("stroke", "blue")
+          .transition()
+           .on("start", repeat) ;
+      });
+
+    //Circles added to the circleGroup
+    var circles = g.selectAll("path")
+                             .data(data);
+                             
+                             
+    circles.transition(t)
+           
+             .attr("d",function(d){return drawCircle(100,100,100,d.percent);})
+             
+             .attr("stroke-width","1")
+             .attr("fill","none")
+             .attr("opacity",function(d){return d.opacity;})
+             
+             .attr("stroke",function(d){return d.color;})
+             .attr("stroke-width","11");
+
+    circles.enter().append("path")
+                .attr("d",function(d){return drawCircle(100,100,100,d.percent);})
+                
+                .attr("stroke-width","1")
+                .transition(t)
+                .attr("fill","none")
+                .attr("opacity",function(d){return d.opacity;})
+                
+                .attr("stroke",function(d){return d.color;})
+                .attr("stroke-width","11");
+
+
+    }
+
+//function update(data) {
+//  var t = d3.transition()
+//      .duration(750)
+//      .on("start", function repeat() {
+//        d3.active(this)
+//            .style("background", "red")
+//         // .transition()
+//            //.style("background", "blue")
+//          //.transition()
+//            //.on("start", repeat);
+//      });
+//
+//  // JOIN new data with old elements.
+//  var text = g.selectAll("text")
+//    .data(data, function(d) { return d; });
+//
+//  // EXIT old elements not present in new data.
+//  text.exit()
+//      .attr("class", "exit")
+//    .transition(t)
+//      .attr("y", 60)
+//      .style("fill-opacity", 1e-6)
+//      .remove();
+//
+//  // UPDATE old elements present in new data.
+//  text.attr("class", "update")
+//      .attr("y", 0)
+//      .style("fill-opacity", 1)
+//    .transition(t)
+//      .attr("x", function(d, i) { return i * 32; });
+//
+//  // ENTER new elements present in new data.
+//  text.enter().append("text")
+//      .attr("class", "enter")
+//      .attr("dy", ".35em")
+//      .attr("y", -60)
+//      .attr("x", function(d, i) { return i * 32; })
+//      .style("fill-opacity", 1e-6)
+//      .text(function(d) { return d; })
+//    .transition(t)
+//      .attr("y", 0)
+//      .style("fill-opacity", 1);
+//}
+update();
+//
+//// Grab a random sample of letters from the alphabet, in alphabetical order.
+d3.interval(function() {
+        data[1].percent +=0.01;
+        update();
+}, 5500);
+// The initial display.
+//
+</script>
+</html>
