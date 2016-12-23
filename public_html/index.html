@@ -12,7 +12,7 @@
 
 
 text {
-  font: bold 48px monospace;
+  font: bold 36px monospace;
 }
 
 .enter {
@@ -36,26 +36,44 @@ text {
     </head>
 
     <body>
-        <svg width="960" height="800">
+        <svg width="1200" height="700">
 
         </svg>
     </body>
 <script>
 //var alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
 //
-var data = [
-   {"percent" : 1,"color":"gray","opacity":"0.3"},
-   {"percent" : 0.5,"color":"orange","opacity":"1"}
+var data = [  
+   {"percent" : 1,"color":"gray","opacity":"0.3","value":1000,"x":150,"y":100,"r":100},
+   {"percent" : 0.2942,"color":"orange","opacity":"1","value":295,"x":150,"y":100,"r":100},
+   {"percent" : 1,"color":"gray","opacity":"0.3","value":192,"x":550,"y":100,"r":100},
+   {"percent" : 0.2942,"color":"orange","opacity":"1","value":56,"x":550,"y":100,"r":100},
+   {"percent" : 1,"color":"gray","opacity":"0.3","value":32,"x":950,"y":100,"r":100},
+   {"percent" : 0.2942,"color":"orange","opacity":"1","value":9,"x":950,"y":100,"r":100}
+];
+var image = [
+    {"href":"img/typing.png","x":100,"y":50},
+    {"href":"img/checking.png","x":500,"y":50},
+    {"href":"img/users.png","x":900,"y":50}
+];
+var package = [
+    {"volume":1000,"keyed":100}
 ];
 var svg = d3.select("svg"),
     width = +svg.attr("width"),
     height = +svg.attr("height"),
     g = svg.append("g").attr("transform", "translate(32," + (height / 2) + ")");
-
+    g2 = svg.append("g").attr("transform", "translate(32,0)");
     //<path id="arc1" fill="none" stroke="#446688" stroke-width="20" d="M 50 150 A 100 100 0 1 0 150 50"></path>
     function drawCircle(x,y,radius,percent){
         var context = d3.path();
         context.arc(x,y,radius,percent*1.7*Math.PI,0.5*Math.PI,true);
+        return context.toString();
+    }
+    function drawLine(x,y,dx,dy){
+        var context = d3.path();
+        context.moveTo(x,y);
+        context.lineTo(dx,dy);
         return context.toString();
     }
     function update(){
@@ -77,7 +95,7 @@ var svg = d3.select("svg"),
                              
     circles.transition(t)
            
-             .attr("d",function(d){return drawCircle(100,100,100,d.percent);})
+             .attr("d",function(d){return drawCircle(d.x,d.y,d.r,d.percent);})
              
              .attr("stroke-width","1")
              .attr("fill","none")
@@ -87,19 +105,109 @@ var svg = d3.select("svg"),
              .attr("stroke-width","11");
 
     circles.enter().append("path")
-                .attr("d",function(d){return drawCircle(100,100,100,d.percent);})
+                .attr("d",function(d){return drawCircle(d.x,d.y,d.r,d.percent);})
                 
                 .attr("stroke-width","1")
                 .transition(t)
                 .attr("fill","none")
-                .attr("opacity",function(d){return d.opacity;})
-                
+                .attr("opacity",function(d){return d.opacity;})          
                 .attr("stroke",function(d){return d.color;})
                 .attr("stroke-width","11");
-
-
+          
+    var texts_even = g.selectAll("text").filter(":nth-child(even)")
+            .data([data[1],data[3],data[5]]);
+    var texts_odd = g.selectAll("text").filter(":nth-child(odd)")
+            .data(data);
+        texts_even
+                .text(function(d){return d.value;})
+                .attr("dx", function(d){return d.percent===1? d.x+0.8*d.r:d.x-20;})
+                .attr("dy", function(d){return d.percent===1? d.y-d.r:d.y+1.8*d.r;})
+                .attr("opacity",function(d){return d.opacity;})          
+                .attr("stroke",function(d){return d.color;})
+                .attr("fill",function(d){return d.color;});    
+        g.selectAll("text").data(data).enter().append("text")
+                .text(function(d){return d.value;})
+                .attr("dx", function(d){return d.percent===1? d.x+0.8*d.r:d.x-20;})
+                .attr("dy", function(d){return d.percent===1? d.y-d.r:d.y+1.8*d.r;})
+                .attr("opacity",function(d){return d.opacity;})          
+                .attr("stroke",function(d){return d.color;})
+                .attr("fill",function(d){return d.color;});
+     var imgs = g.selectAll("image").data(image);
+                imgs.enter()
+                .append("svg:image")
+                .attr("xlink:href", function(d){return d.href;})
+                .attr("x", function(d){return d.x;})
+                .attr("y", function(d){return d.y;})
+                .attr("width", "100")
+                .attr("height", "100");
+        ;
     }
+    function update_line(){
+          var t = d3.transition()
+          .duration(750)
+          .on("start", function repeat() {
+            d3.active(this).selectAll("path").filter(":nth-child(even)")
+                .style("stroke", "purple")
+              .transition()
+                .style("stroke", "blue")
+              .transition()
+               .on("start", repeat) ;
+          });
 
+        //Circles added to the circleGroup
+        var lines = g2.selectAll("path")
+                                 .data(package);
+
+
+        lines.transition(t)
+
+                 .attr("d",function(d){return drawLine(100,100,200,100);})
+
+                 .attr("stroke-width","1")
+                 .attr("fill","none")
+                 .attr("opacity","0.3")
+
+                 .attr("stroke","orange")
+                 .attr("stroke-width","11");
+
+        lines.enter().append("path")
+                    .attr("d",function(d){return drawLine(100,100,200,100);})
+
+                    .attr("stroke-width","1")
+                    .transition(t)
+                    .attr("fill","none")
+                    .attr("opacity","0.3")          
+                    .attr("stroke","orange")
+                    .attr("stroke-width","11");
+
+        var texts_even = g2.selectAll("text").filter(":nth-child(even)")
+                .data([data[1],data[3],data[5]]);
+        var texts_odd = g2.selectAll("text").filter(":nth-child(odd)")
+                .data(data);
+            texts_even
+                    .text(function(d){return d.value;})
+                    .attr("dx", function(d){return d.percent===1? d.x+0.8*d.r:d.x-20;})
+                    .attr("dy", function(d){return d.percent===1? d.y-d.r:d.y+1.8*d.r;})
+                    .attr("opacity",function(d){return d.opacity;})          
+                    .attr("stroke",function(d){return d.color;})
+                    .attr("fill",function(d){return d.color;});    
+            g2.selectAll("text").data(data).enter().append("text")
+                    .text(function(d){return d.value;})
+                    .attr("dx", function(d){return d.percent===1? d.x+0.8*d.r:d.x-20;})
+                    .attr("dy", function(d){return d.percent===1? d.y-d.r:d.y+1.8*d.r;})
+                    .attr("opacity",function(d){return d.opacity;})          
+                    .attr("stroke",function(d){return d.color;})
+                    .attr("fill",function(d){return d.color;});
+         var imgs = g.selectAll("image").data(image);
+                    imgs.enter()
+                    .append("svg:image")
+                    .attr("xlink:href", function(d){return d.href;})
+                    .attr("x", function(d){return d.x;})
+                    .attr("y", function(d){return d.y;})
+                    .attr("width", "100")
+                    .attr("height", "100");
+            ;
+        }
 //function update(data) {
 //  var t = d3.transition()
 //      .duration(750)
@@ -144,12 +252,18 @@ var svg = d3.select("svg"),
 //      .style("fill-opacity", 1);
 //}
 update();
+update_line();
 //
 //// Grab a random sample of letters from the alphabet, in alphabetical order.
 d3.interval(function() {
-        data[1].percent +=0.01;
+        data[1].value +=1;
+        data[3].value +=1;
+        data[5].value += data[5].value === data[4].value ? 0:1;
+        data[1].percent = data[1].value/data[0].value;
+        data[3].percent = data[3].value/data[2].value;
+        data[5].percent = data[5].value/data[4].value>1 ? 0.999 : data[5].value/data[4].value;
         update();
-}, 5500);
+}, 1500);
 // The initial display.
 //
 </script>
