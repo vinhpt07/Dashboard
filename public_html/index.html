@@ -153,15 +153,17 @@ var svg = d3.select("svg"),
               .transition()
                .on("start", repeat) ;
           });
-
+          var count = package.length;
+          var cx = width/2;
+          var cy = height/4;
         //Circles added to the circleGroup
         var lines = g2.selectAll("path")
                                  .data(package);
 
-
+                                
         lines.transition(t)
 
-                 .attr("d",function(d){return drawLine(100,100,200,100);})
+                 .attr("d",function(d){return drawLine(cx,cy,200,100);})
 
                  .attr("stroke-width","1")
                  .attr("fill","none")
@@ -171,7 +173,7 @@ var svg = d3.select("svg"),
                  .attr("stroke-width","11");
 
         lines.enter().append("path")
-                    .attr("d",function(d){return drawLine(100,100,200,100);})
+                    .attr("d",function(d){return drawLine(cx,cy,cx+200,cy);})
 
                     .attr("stroke-width","1")
                     .transition(t)
@@ -179,34 +181,10 @@ var svg = d3.select("svg"),
                     .attr("opacity","0.3")          
                     .attr("stroke","orange")
                     .attr("stroke-width","11");
-
-        var texts_even = g2.selectAll("text").filter(":nth-child(even)")
-                .data([data[1],data[3],data[5]]);
-        var texts_odd = g2.selectAll("text").filter(":nth-child(odd)")
-                .data(data);
-            texts_even
-                    .text(function(d){return d.value;})
-                    .attr("dx", function(d){return d.percent===1? d.x+0.8*d.r:d.x-20;})
-                    .attr("dy", function(d){return d.percent===1? d.y-d.r:d.y+1.8*d.r;})
-                    .attr("opacity",function(d){return d.opacity;})          
-                    .attr("stroke",function(d){return d.color;})
-                    .attr("fill",function(d){return d.color;});    
-            g2.selectAll("text").data(data).enter().append("text")
-                    .text(function(d){return d.value;})
-                    .attr("dx", function(d){return d.percent===1? d.x+0.8*d.r:d.x-20;})
-                    .attr("dy", function(d){return d.percent===1? d.y-d.r:d.y+1.8*d.r;})
-                    .attr("opacity",function(d){return d.opacity;})          
-                    .attr("stroke",function(d){return d.color;})
-                    .attr("fill",function(d){return d.color;});
-         var imgs = g.selectAll("image").data(image);
-                    imgs.enter()
-                    .append("svg:image")
-                    .attr("xlink:href", function(d){return d.href;})
-                    .attr("x", function(d){return d.x;})
-                    .attr("y", function(d){return d.y;})
-                    .attr("width", "100")
-                    .attr("height", "100");
-            ;
+            var i = 0;
+            i++;
+            if (i == count) return;
+            update_line();
         }
 //function update(data) {
 //  var t = d3.transition()
