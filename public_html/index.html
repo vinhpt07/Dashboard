@@ -57,14 +57,27 @@ var image = [
     {"href":"img/users.png","x":900,"y":50}
 ];
 var package = [
-    {"volume":1000,"keyed":100}
+    {"volume":1000,"keyed":100},{"volume":1000,"keyed":800}
+
 ];
+
 var svg = d3.select("svg"),
     width = +svg.attr("width"),
     height = +svg.attr("height"),
     g = svg.append("g").attr("transform", "translate(32," + (height / 2) + ")");
     g2 = svg.append("g").attr("transform", "translate(32,0)");
     //<path id="arc1" fill="none" stroke="#446688" stroke-width="20" d="M 50 150 A 100 100 0 1 0 150 50"></path>
+var   count = package.length,
+      cx = width/2,
+      cy = height/4,
+      stdLen = count<=6 ? width/6:width/6,
+      stdHei = 11;
+var tooltip = d3.select("body")
+	.append("div")
+	.style("position", "absolute")
+	.style("z-index", "10")
+	.style("visibility", "hidden")
+	.text("a simple tooltip");         
     function drawCircle(x,y,radius,percent){
         var context = d3.path();
         context.arc(x,y,radius,percent*1.7*Math.PI,0.5*Math.PI,true);
@@ -77,7 +90,7 @@ var svg = d3.select("svg"),
         return context.toString();
     }
     function update(){
-      var t = d3.transition()
+      var t = g.transition()
       .duration(750)
       .on("start", function repeat() {
         d3.active(this).selectAll("path").filter(":nth-child(even)")
@@ -142,49 +155,100 @@ var svg = d3.select("svg"),
                 .attr("height", "100");
         ;
     }
+    var getGradient = function(percent,i){
+     gradient = svg.append("svg:defs")
+    .append("svg:linearGradient")
+    .attr("id", "gradient"+i)
+    .attr("x1", "0%")
+    .attr("y1", "0%")
+    .attr("x2", "100%")
+    .attr("y2", "0%")
+    .attr("spreadMethod", "pad")
+    ;
+
+    gradient.append("svg:stop")
+    .attr("offset", percent+'%')
+    .attr("stop-color", "red")
+    .attr("stop-opacity", 1);
+
+    gradient.append("svg:stop")
+    .attr("offset", "0%")
+    .attr("stop-color", "gray")
+    .attr("stop-opacity", 0.3);
+    return "url(#gradient"+i+")";
+    };
     function update_line(){
-          var t = d3.transition()
+          var t = g2.transition()
           .duration(750)
-          .on("start", function repeat() {
-            d3.active(this).selectAll("path").filter(":nth-child(even)")
-                .style("stroke", "purple")
-              .transition()
-                .style("stroke", "blue")
-              .transition()
-               .on("start", repeat) ;
-          });
-          var count = package.length;
-          var cx = width/2;
-          var cy = height/4;
+//          .on("start", function repeat() {
+//            d3.active(this).selectAll("path").filter(":nth-child(even)")
+//                .style("stroke", "purple")
+//              .transition()
+//                .style("stroke", "blue")
+//              .transition()
+//               .on("start", repeat) ;
+//          })
+;
+
+       var dim = analyze(); 
+//        g2.selectAll("cirle").data([0])
+//                .enter().append("circle")
+//                .attr("cx",cx)
+//                .attr("cy",cy)
+//                .attr("r",3)
+//                .attr("fill","black");
+        var drawPackage = function(d,i){
+            return drawLine(dim[i].x,dim[i].y,dim[i].dx,dim[i].dy);         
+        }; 
         //Circles added to the circleGroup
         var lines = g2.selectAll("path")
                                  .data(package);
 
-                                
-        lines.transition(t)
+//          lines.remove();                      
+        lines
 
-                 .attr("d",function(d){return drawLine(cx,cy,200,100);})
+                 .attr("d",drawPackage)
 
                  .attr("stroke-width","1")
-                 .attr("fill","none")
+                 .attr("fill","url(#gradient)")
                  .attr("opacity","0.3")
 
                  .attr("stroke","orange")
                  .attr("stroke-width","11");
 
         lines.enter().append("path")
-                    .attr("d",function(d){return drawLine(cx,cy,cx+200,cy);})
-
+                    .attr("d",drawPackage)
+                    
                     .attr("stroke-width","1")
-                    .transition(t)
-                    .attr("fill","none")
-                    .attr("opacity","0.3")          
-                    .attr("stroke","orange")
-                    .attr("stroke-width","11");
-            var i = 0;
-            i++;
-            if (i == count) return;
-            update_line();
+
+                    .attr("fill","none")         
+                    .attr("stroke",function(d,i){return getGradient(d.keyed*100/d.volume,i);})
+                    .attr("stroke-width","11")
+  
+	.on("load", function(){return tooltip.style("top", (d3.event.pageY-10)+"px").style("left",(d3.event.pageX+10)+"px").style("visibility", "visible");})
+                    ;
+//            var i = 0;
+//            i++;
+//            if (i == count) return;
+//            update_line();
+        }
+        function analyze(){
+            total_len = 0;
+            ab =0;
+            dimension =[];
+            count = package.length;
+            package.forEach(function(v){total_len += v.volume/1000;});
+            count = count>6?6:count;
+            for(i=0;i<count;i++){
+                d={};
+                d.x = cx+(i-total_len/2)*stdLen - (ab)*stdLen;
+                d.y = cy+(-i+total_len/2)*stdHei;
+                d.dx = cx+(i+package[i].volume/1000-total_len/2)*stdLen - (ab)*stdLen;
+                d.dy = cy+(-i+total_len/2)*stdHei+0.01;
+                ab += package[i].volume/1000 !== 1 ? 1 - package[i].volume/1000:0;
+                dimension.push(d);
+            }
+            return dimension;
         }
 //function update(data) {
 //  var t = d3.transition()
@@ -241,6 +305,8 @@ d3.interval(function() {
         data[3].percent = data[3].value/data[2].value;
         data[5].percent = data[5].value/data[4].value>1 ? 0.999 : data[5].value/data[4].value;
         update();
+//        package.push({"volume":d3.randomUniform(100,1000)(),"keyed":100});
+//        update_line();
 }, 1500);
 // The initial display.
 //
