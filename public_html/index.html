@@ -57,27 +57,54 @@ var image = [
     {"href":"img/users.png","x":900,"y":50}
 ];
 var package = [
-    {"volume":1000,"keyed":100},{"volume":1000,"keyed":800}
-
+    {"volume":1000,"keyed":100},{"volume":1000,"keyed":0}
 ];
 
 var svg = d3.select("svg"),
     width = +svg.attr("width"),
     height = +svg.attr("height"),
-    g = svg.append("g").attr("transform", "translate(32," + (height / 2) + ")");
-    g2 = svg.append("g").attr("transform", "translate(32,0)");
+    g = svg.append("g").attr("transform", "translate(100," + (height / 2) + ")");
+    g2 = svg.append("g").attr("transform", "translate(100,0)").attr("id","bar");
+    g3 = svg.append("g").attr("transform", "translate(100,0)");
     //<path id="arc1" fill="none" stroke="#446688" stroke-width="20" d="M 50 150 A 100 100 0 1 0 150 50"></path>
 var   count = package.length,
       cx = width/2,
       cy = height/4,
-      stdLen = count<=6 ? width/6:width/6,
-      stdHei = 11;
-var tooltip = d3.select("body")
-	.append("div")
-	.style("position", "absolute")
-	.style("z-index", "10")
-	.style("visibility", "hidden")
-	.text("a simple tooltip");         
+      limit  = 5,
+      stdLen = count<=limit ? width/limit:width/limit,
+      stdHei = 20
+      ;
+    function triangle(selector,percent,num){
+        if (num>limit) return;
+        var dime;
+        var x = d3.select("#bar").selectAll("path").filter(function(d, i) { return i === num; });
+            dime = x
+                .attr("d").replace("M","")
+                .replace("L",",").split(",");
+            dime[0]=dime[2]=parseFloat(dime[0])+(parseFloat(dime[2])-parseFloat(dime[0]))*parseFloat(percent)/100;
+            dime[3]=parseFloat(dime[3])-100;
+//        var context = selector.selectAll("path").data([0]);
+//            context.attr("d","M"+dime[0]+" "+dime[1]+" L"+dime[2]+" "+dime[3]);
+//            context.enter().append("path")
+//                .attr("d","M"+dime[0]+" "+dime[1]+" L"+dime[2]+" "+dime[3])
+//                .attr("stroke","red");
+        var context = selector.selectAll("image").data([0]);
+
+                 context.transition().duration(1000)
+                //.attr("xlink:href", "img/runner2.gif")
+                .attr("x", dime[0])
+                .attr("y", parseFloat(dime[1])-30)
+                //.attr("width", "20")
+                //.attr("height", "20")
+                ;
+                context.enter()
+                .append("svg:image")
+                .attr("xlink:href", "img/runner2.gif")
+                .attr("x", dime[0])
+                .attr("y", parseFloat(dime[1])-30)
+                .attr("width", "20")
+                .attr("height", "20");
+    }  
     function drawCircle(x,y,radius,percent){
         var context = d3.path();
         context.arc(x,y,radius,percent*1.7*Math.PI,0.5*Math.PI,true);
@@ -156,27 +183,34 @@ var tooltip = d3.select("body")
         ;
     }
     var getGradient = function(percent,i){
-     gradient = svg.append("svg:defs")
-    .append("svg:linearGradient")
-    .attr("id", "gradient"+i)
-    .attr("x1", "0%")
-    .attr("y1", "0%")
-    .attr("x2", "100%")
-    .attr("y2", "0%")
-    .attr("spreadMethod", "pad")
-    ;
+        if (i>limit) return;
+        if (document.getElementById("gradient"+i)!==null) {
+            svg.select("#gradient"+i+">stop").attr("offset",percent+'%');
+            if (parseFloat(percent)>0 && parseFloat(percent)!==100) triangle(g3,percent,i);
+            return "url(#gradient"+i+")";
+        }
+        gradient = svg.append("svg:defs")
+       .append("svg:linearGradient")
+       .attr("id", "gradient"+i)
+       .attr("x1", "0%")
+       .attr("y1", "0%")
+       .attr("x2", "100%")
+       .attr("y2", "0%")
+       .attr("spreadMethod", "pad")
+       ;
 
-    gradient.append("svg:stop")
-    .attr("offset", percent+'%')
-    .attr("stop-color", "red")
-    .attr("stop-opacity", 1);
+       gradient.append("svg:stop")
+       .attr("offset", percent+'%')
+       .attr("stop-color", "darkgreen")
+       .attr("stop-opacity", 1);
 
-    gradient.append("svg:stop")
-    .attr("offset", "0%")
-    .attr("stop-color", "gray")
-    .attr("stop-opacity", 0.3);
-    return "url(#gradient"+i+")";
+       gradient.append("svg:stop")
+       .attr("offset", "0%")
+       .attr("stop-color", "gray")
+       .attr("stop-opacity", 0.3);
+       return "url(#gradient"+i+")";
     };
+ 
     function update_line(){
           var t = g2.transition()
           .duration(750)
@@ -189,43 +223,39 @@ var tooltip = d3.select("body")
 //               .on("start", repeat) ;
 //          })
 ;
-
-       var dim = analyze(); 
+    var dim = analyze();
+    var drawPackage = function(d,i){
+        if (i>limit) return;
+        return drawLine(dim[i].x,dim[i].y,dim[i].dx,dim[i].dy);         
+    };
+  
+       
 //        g2.selectAll("cirle").data([0])
 //                .enter().append("circle")
 //                .attr("cx",cx)
 //                .attr("cy",cy)
 //                .attr("r",3)
 //                .attr("fill","black");
-        var drawPackage = function(d,i){
-            return drawLine(dim[i].x,dim[i].y,dim[i].dx,dim[i].dy);         
-        }; 
+ 
         //Circles added to the circleGroup
         var lines = g2.selectAll("path")
                                  .data(package);
 
 //          lines.remove();                      
         lines
-
                  .attr("d",drawPackage)
-
                  .attr("stroke-width","1")
-                 .attr("fill","url(#gradient)")
-                 .attr("opacity","0.3")
-
-                 .attr("stroke","orange")
-                 .attr("stroke-width","11");
+                 .attr("fill","none")
+                 .attr("stroke",function(d,i){return getGradient(d.keyed*100/d.volume,i);})
+                 .attr("stroke-width",stdHei)
+         ;
 
         lines.enter().append("path")
-                    .attr("d",drawPackage)
-                    
+                    .attr("d",drawPackage)                  
                     .attr("stroke-width","1")
-
                     .attr("fill","none")         
                     .attr("stroke",function(d,i){return getGradient(d.keyed*100/d.volume,i);})
-                    .attr("stroke-width","11")
-  
-	.on("load", function(){return tooltip.style("top", (d3.event.pageY-10)+"px").style("left",(d3.event.pageX+10)+"px").style("visibility", "visible");})
+                    .attr("stroke-width",stdHei)	
                     ;
 //            var i = 0;
 //            i++;
@@ -237,8 +267,8 @@ var tooltip = d3.select("body")
             ab =0;
             dimension =[];
             count = package.length;
-            package.forEach(function(v){total_len += v.volume/1000;});
-            count = count>6?6:count;
+            package.slice(0,limit+1).forEach(function(v){total_len += v.volume/1000;});
+            count = count>limit+1?limit+1:count;
             for(i=0;i<count;i++){
                 d={};
                 d.x = cx+(i-total_len/2)*stdLen - (ab)*stdLen;
@@ -295,6 +325,7 @@ var tooltip = d3.select("body")
 //}
 update();
 update_line();
+
 //
 //// Grab a random sample of letters from the alphabet, in alphabetical order.
 d3.interval(function() {
@@ -305,8 +336,25 @@ d3.interval(function() {
         data[3].percent = data[3].value/data[2].value;
         data[5].percent = data[5].value/data[4].value>1 ? 0.999 : data[5].value/data[4].value;
         update();
-//        package.push({"volume":d3.randomUniform(100,1000)(),"keyed":100});
-//        update_line();
+        if(package.length < 10) package.push({"volume":d3.randomUniform(1000,1000)(),"keyed":d3.randomUniform(0,0)()});
+        switch (true){
+         case package[0].keyed < 1000:
+             package[0].keyed +=100;
+             break;
+         case package[1].keyed < 1000:
+             package[1].keyed +=100;
+             break;
+         case package[2].keyed < 1000:
+             package[2].keyed +=100;
+             break;
+         case package[3].keyed < 1000:
+             package[3].keyed +=100;
+             break;
+         default:
+             if(package[4].keyed!==1000) package[4].keyed +=100;
+     }     
+        update_line();
+        
 }, 1500);
 // The initial display.
 //
