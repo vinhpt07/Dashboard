@@ -7,10 +7,6 @@
         <script src="https://d3js.org/d3.v4.min.js"></script>
         <style>
 
-
-
-
-
 text {
   font: bold 36px monospace;
 }
@@ -27,16 +23,11 @@ text {
   fill: brown;
 }
 
-
-
-
-
-
     </style>
     </head>
 
     <body>
-        <svg width="1200" height="700">
+        <svg width="1400" height="700">
 
         </svg>
     </body>
@@ -57,23 +48,28 @@ var image = [
     {"href":"img/users.png","x":900,"y":50}
 ];
 var package = [
-    {"volume":1000,"keyed":100},{"volume":1000,"keyed":0}
+    {"volume":1000,"keyed":0},{"volume":1000,"keyed":0}
 ];
 
 var svg = d3.select("svg"),
     width = +svg.attr("width"),
     height = +svg.attr("height"),
-    g = svg.append("g").attr("transform", "translate(100," + (height / 2) + ")");
-    g2 = svg.append("g").attr("transform", "translate(100,0)").attr("id","bar");
-    g3 = svg.append("g").attr("transform", "translate(100,0)");
+    padding_left = padding_right = 32;
+    g = svg.append("g").attr("transform", "translate("+padding_left+ "," + (height / 2) + ")");
+    g2 = svg.append("g").attr("transform", "translate("+padding_left+ "," + 0 + ")").attr("id","bar");
+    g3 = svg.append("g").attr("transform", "translate("+padding_left+ "," + (0 / 2) + ")");
     //<path id="arc1" fill="none" stroke="#446688" stroke-width="20" d="M 50 150 A 100 100 0 1 0 150 50"></path>
 var   count = package.length,
       cx = width/2,
       cy = height/4,
-      limit  = 5,
-      stdLen = count<=limit ? width/limit:width/limit,
-      stdHei = 20
+      limit  = 3,
+      stdLen = count<=limit ? width/6:width/6,
+      stdHei = 20,
+      ST_PENDING = 'Pending',
+      ST_COMPLETED = 'Completed',
+      ST_PROCESS = 'Process'
       ;
+   
     function triangle(selector,percent,num){
         if (num>limit) return;
         var dime;
@@ -89,13 +85,9 @@ var   count = package.length,
 //                .attr("d","M"+dime[0]+" "+dime[1]+" L"+dime[2]+" "+dime[3])
 //                .attr("stroke","red");
         var context = selector.selectAll("image").data([0]);
-
                  context.transition().duration(1000)
-                //.attr("xlink:href", "img/runner2.gif")
                 .attr("x", dime[0])
                 .attr("y", parseFloat(dime[1])-30)
-                //.attr("width", "20")
-                //.attr("height", "20")
                 ;
                 context.enter()
                 .append("svg:image")
@@ -183,7 +175,10 @@ var   count = package.length,
         ;
     }
     var getGradient = function(percent,i){
-        if (i>limit) return;
+        if (percent===0) return "gray";
+        if (percent===100) return "green";
+        if (package[i].status ===ST_COMPLETED) return "blue";
+        if (package[i].status ===ST_PENDING) return "red";
         if (document.getElementById("gradient"+i)!==null) {
             svg.select("#gradient"+i+">stop").attr("offset",percent+'%');
             if (parseFloat(percent)>0 && parseFloat(percent)!==100) triangle(g3,percent,i);
@@ -225,37 +220,34 @@ var   count = package.length,
 ;
     var dim = analyze();
     var drawPackage = function(d,i){
-        if (i>limit) return;
         return drawLine(dim[i].x,dim[i].y,dim[i].dx,dim[i].dy);         
     };
-  
-       
-//        g2.selectAll("cirle").data([0])
-//                .enter().append("circle")
-//                .attr("cx",cx)
-//                .attr("cy",cy)
-//                .attr("r",3)
-//                .attr("fill","black");
- 
-        //Circles added to the circleGroup
+    var setHeight = function(d,i){
+        return dim[i].hei;
+    };
+    var setStroke = function(d,i){
+        if(d.status === ST_PROCESS)
+            return getGradient(d.keyed*100/d.volume,i);
+        else
+            return dim[i].stroke;
+    };
         var lines = g2.selectAll("path")
                                  .data(package);
 
 //          lines.remove();                      
-        lines
+        lines.transition().duration(750)
                  .attr("d",drawPackage)
-                 .attr("stroke-width","1")
-                 .attr("fill","none")
-                 .attr("stroke",function(d,i){return getGradient(d.keyed*100/d.volume,i);})
-                 .attr("stroke-width",stdHei)
+                 .attr("stroke",setStroke)
+                 .attr("stroke-width",setHeight)
          ;
 
         lines.enter().append("path")
                     .attr("d",drawPackage)                  
                     .attr("stroke-width","1")
-                    .attr("fill","none")         
-                    .attr("stroke",function(d,i){return getGradient(d.keyed*100/d.volume,i);})
-                    .attr("stroke-width",stdHei)	
+                    .attr("fill","none")  
+                    .attr("stroke-linecap","round")
+                    .attr("stroke",setStroke)
+                    .attr("stroke-width",setHeight)	
                     ;
 //            var i = 0;
 //            i++;
@@ -266,19 +258,71 @@ var   count = package.length,
             total_len = 0;
             ab =0;
             dimension =[];
-            count = package.length;
-            package.slice(0,limit+1).forEach(function(v){total_len += v.volume/1000;});
-            count = count>limit+1?limit+1:count;
+            count = package.length;            
+            package.forEach(function(v){total_len += v.status ===ST_PROCESS? v.volume/1000:0;});
+            //count = count>limit+1?limit+1:count;
             for(i=0;i<count;i++){
                 d={};
-                d.x = cx+(i-total_len/2)*stdLen - (ab)*stdLen;
-                d.y = cy+(-i+total_len/2)*stdHei;
-                d.dx = cx+(i+package[i].volume/1000-total_len/2)*stdLen - (ab)*stdLen;
-                d.dy = cy+(-i+total_len/2)*stdHei+0.01;
-                ab += package[i].volume/1000 !== 1 ? 1 - package[i].volume/1000:0;
-                dimension.push(d);
+                switch (package[i].status){
+                    
+                    case ST_PROCESS:
+                        pid = package[i].pid;
+                        d.x = cx+(pid-total_len/2)*stdLen - (ab)*stdLen;
+                        d.y = cy+(-pid+total_len/2)*stdHei;
+                        d.dx = cx+(pid+package[i].volume/1000-total_len/2)*stdLen - (ab)*stdLen;
+                        d.dy = cy+(-pid+total_len/2)*stdHei+0.01;
+                        d.hei = stdHei;
+                        ab += package[i].volume/1000 !== 1 ? 1 - package[i].volume/1000:0;
+                        dimension.push(d);
+                        break;
+                    case ST_COMPLETED:
+                        d.x = padding_left;
+                        d.y = cy*4/3- i*10;
+                        d.dx = padding_left+stdLen*package[i].volume/2/1000;
+                        d.dy = cy*4/3- i*10;
+                        d.hei = stdHei/2;
+                        d.stroke = "blue";
+                        dimension.push(d);
+                        break;
+                    case ST_PENDING:
+                        d.x = width - stdLen*package[i].volume/2/1000 - padding_right;
+                        d.y = cy- i*10;
+                        d.dx = width - padding_right -10;
+                        d.dy = cy- i*10;
+                        d.hei = stdHei/2;
+                        d.stroke = "red";
+                        dimension.push(d);
+                        break;
+                }    
             }
             return dimension;
+        }
+        function updateStatus(num){
+            p_sub = package.slice(num);
+            count = p_sub.length;
+            process =0;
+            for(i=0;i<count;i++){
+               switch (true){
+                   case count <= limit+1:
+                        package[i+num].status = ST_PROCESS;
+                        package[i+num].pid = process;
+                        process++;
+                        break;
+                   case p_sub[i].volume === p_sub[i].keyed:
+                        package[i+num].status = ST_COMPLETED;
+                        num++;
+                        updateStatus(num);
+                        break;
+                   case process <limit+1:
+                        package[i+num].status = ST_PROCESS;
+                        package[i+num].pid = process;
+                        process++;
+                        break;
+                   default:
+                        package[i+num].status = ST_PENDING;
+                        break;
+               }
+            };
         }
 //function update(data) {
 //  var t = d3.transition()
@@ -324,6 +368,7 @@ var   count = package.length,
 //      .style("fill-opacity", 1);
 //}
 update();
+updateStatus(0);
 update_line();
 
 //
@@ -336,7 +381,7 @@ d3.interval(function() {
         data[3].percent = data[3].value/data[2].value;
         data[5].percent = data[5].value/data[4].value>1 ? 0.999 : data[5].value/data[4].value;
         update();
-        if(package.length < 10) package.push({"volume":d3.randomUniform(1000,1000)(),"keyed":d3.randomUniform(0,0)()});
+        if(package.length < 20) package.push({"volume":d3.randomUniform(300,1000)(),"keyed":d3.randomUniform(0,0)()});
         switch (true){
          case package[0].keyed < 1000:
              package[0].keyed +=100;
@@ -352,7 +397,8 @@ d3.interval(function() {
              break;
          default:
              if(package[4].keyed!==1000) package[4].keyed +=100;
-     }     
+     } 
+     updateStatus(0);
         update_line();
         
 }, 1500);
