@@ -3,26 +3,37 @@
     <head>
         <title>NexGen DashBoard</title>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width">
+        <meta name="viewport" content="width=device-width">   
+        <meta http-equiv="cache-control" content="max-age=0" />
+        <meta http-equiv="cache-control" content="no-cache" />
+        <meta http-equiv="expires" content="0" />
+        <meta http-equiv="expires" content="Tue, 01 Jan 1980 1:00:00 GMT" />
+        <meta http-equiv="pragma" content="no-cache" />
         <script src="https://d3js.org/d3.v4.min.js"></script>
         <style>
 
 text {
-  font: bold 36px monospace;
+     font-family: times, Times New Roman, times-roman, georgia, serif;
+     font-size: 24px;
 }
-
-.enter {
-  fill: green;
+text.banner{
+    color: #ff3333;
+ margin: 0;
+ padding: 0px 0px 6px 0px;
+ font-size: 36px;
+ line-height: 44px;
+ letter-spacing: -2px;
+ font-weight: bold;	
+ text-shadow: 2px 2px 8px lightgreen;
 }
-
-.update {
-  fill: #333;
+text.smallHeader{
+ font-family: Gill Sans, Verdana;
+ font-size: 11px;
+ line-height: 14px;
+ text-transform: uppercase;
+ letter-spacing: 2px;
+ font-weight: bold;
 }
-
-.exit {
-  fill: brown;
-}
-
     </style>
     </head>
 
@@ -55,7 +66,9 @@ var svg = d3.select("svg"),
     width = +svg.attr("width"),
     height = +svg.attr("height"),
     padding_left = padding_right = 32;
-    g = svg.append("g").attr("transform", "translate("+padding_left+ "," + (height / 2) + ")");
+    g_snow = svg.append("g").attr("class","svg_image");
+    g_banner = svg.append("g");
+    g = svg.append("g").attr("transform", "translate("+padding_left*6+ "," + (height / 2) + ")");
     g2 = svg.append("g").attr("transform", "translate("+padding_left+ "," + 0 + ")").attr("id","bar");
     g3 = svg.append("g").attr("transform", "translate("+padding_left+ "," + (0 / 2) + ")");
     //<path id="arc1" fill="none" stroke="#446688" stroke-width="20" d="M 50 150 A 100 100 0 1 0 150 50"></path>
@@ -69,7 +82,39 @@ var   count = package.length,
       ST_COMPLETED = 'Completed',
       ST_PROCESS = 'Process'
       ;
-   
+var fly = function(){
+    var translate = "translate("+d3.randomUniform(32,width)()+","+d3.randomUniform(0,height/4)()+")",
+        rotate = "rotate("+d3.randomUniform(0,360)()+")",
+        scale_v = d3.randomUniform(0.3,0.6)(),
+        scale  = "scale("+scale_v+","+scale_v+")"
+                ;
+    return [translate,rotate,scale].join(",");
+};
+var drawSnow = d3.xml("img/snowflake.svg", function(xml) {
+ 
+  // Take xml as nodes.
+  var imported_node = document.importNode(xml.documentElement, true);
+ 
+  var snowflake = g_snow.selectAll(".svg_image")
+  .data([0]);
+  snowflake.transition().duration(1000).attr("transform",fly);
+  snowflake.enter()
+  
+  .each(function(d,i){
+    // Clone and append xml node to each data binded element.
+     this.appendChild(imported_node.cloneNode(true));
+  })
+;
+});
+    var banner =  g_banner.selectAll("text").data([0]).enter();
+
+       banner.append("text")
+             .attr("class","banner")
+             .attr("fill","red")
+             .attr("transform","translate("+(cx-120)+",32)") 
+             .text("NEXGEN DASHBOARD");
+
+
     function triangle(selector,percent,num){
         if (num>limit) return;
         var dime;
@@ -247,7 +292,7 @@ var   count = package.length,
                     .attr("fill","none")  
                     .attr("stroke-linecap","round")
                     .attr("stroke",setStroke)
-                    .attr("stroke-width",setHeight)	
+                    .attr("stroke-width",setHeight)
                     ;
 //            var i = 0;
 //            i++;
@@ -286,9 +331,9 @@ var   count = package.length,
                         break;
                     case ST_PENDING:
                         d.x = width - stdLen*package[i].volume/2/1000 - padding_right;
-                        d.y = cy- i*10;
+                        d.y = cy*4/3- package[i].pid*10;
                         d.dx = width - padding_right -10;
-                        d.dy = cy- i*10;
+                        d.dy = cy*4/3- package[i].pid*10;
                         d.hei = stdHei/2;
                         d.stroke = "red";
                         dimension.push(d);
@@ -301,6 +346,7 @@ var   count = package.length,
             p_sub = package.slice(num);
             count = p_sub.length;
             process =0;
+            pending =0;
             for(i=0;i<count;i++){
                switch (true){
                    case count <= limit+1:
@@ -320,6 +366,8 @@ var   count = package.length,
                         break;
                    default:
                         package[i+num].status = ST_PENDING;
+                        package[i+num].pid = pending;
+                        pending++;
                         break;
                }
             };
@@ -400,7 +448,7 @@ d3.interval(function() {
      } 
      updateStatus(0);
         update_line();
-        
+        svg.selectAll(".svg_image").transition().duration(1000).attr("transform",fly);
 }, 1500);
 // The initial display.
 //
