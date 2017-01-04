@@ -66,7 +66,9 @@ var svg = d3.select("svg"),
     width = +svg.attr("width"),
     height = +svg.attr("height"),
     padding_left = padding_right = 32;
-    g_snow = svg.append("g").attr("class","svg_image");
+    g_snow = svg.append("g").attr("class","svg_image");   
+    g_bottom = g_snow.append("g");
+    g_top = g_snow.append("g");
     g_banner = svg.append("g");
     g = svg.append("g").attr("transform", "translate("+padding_left*6+ "," + (height / 2) + ")");
     g2 = svg.append("g").attr("transform", "translate("+padding_left+ "," + 0 + ")").attr("id","bar");
@@ -84,28 +86,47 @@ var   count = package.length,
       ;
 var fly = function(){
     var translate = "translate("+d3.randomUniform(32,width)()+","+d3.randomUniform(0,height/4)()+")",
-        rotate = "rotate("+d3.randomUniform(0,360)()+")",
+        //rotate = "rotate("+d3.randomUniform(0,360)()+")",
         scale_v = d3.randomUniform(0.3,0.6)(),
         scale  = "scale("+scale_v+","+scale_v+")"
                 ;
-    return [translate,rotate,scale].join(",");
+    return [translate,scale].join(",");
 };
-var drawSnow = d3.xml("img/snowflake.svg", function(xml) {
+var load_xml_top = function(xml) {
  
   // Take xml as nodes.
   var imported_node = document.importNode(xml.documentElement, true);
  
-  var snowflake = g_snow.selectAll(".svg_image")
+  var snowflake = g_top.selectAll("g")
   .data([0]);
-  snowflake.transition().duration(1000).attr("transform",fly);
+  //snowflake.attr("transform",fly);
+  snowflake.enter()
+  .each(function(d,i){
+    // Clone and append xml node to each data binded element.
+     this.appendChild(imported_node.cloneNode(true));
+  })
+
+;
+};
+var load_xml_bottom = function(xml) {
+ 
+  // Take xml as nodes.
+  var imported_node = document.importNode(xml.documentElement, true);
+ 
+  var snowflake = g_bottom.selectAll("g")
+  .data([0]);
   snowflake.enter()
   
   .each(function(d,i){
     // Clone and append xml node to each data binded element.
      this.appendChild(imported_node.cloneNode(true));
   })
+       g_top.transition().attr("transform","translate(-23,120)");
 ;
-});
+};
+d3.xml("img/flowers_bottom.svg", load_xml_bottom);
+d3.xml("img/flowers_top.svg", load_xml_top);
+g_top.transition().attr("transform","translate(-23,120)");
     var banner =  g_banner.selectAll("text").data([0]).enter();
 
        banner.append("text")
@@ -448,8 +469,12 @@ d3.interval(function() {
      } 
      updateStatus(0);
         update_line();
-        svg.selectAll(".svg_image").transition().duration(1000).attr("transform",fly);
+        
 }, 1500);
+d3.interval(function(){
+    svg.selectAll(".svg_image").transition().duration(4000).attr("transform",fly);
+    
+},5000);
 // The initial display.
 //
 </script>

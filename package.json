@@ -1,0 +1,27 @@
+{
+  "name": "dashboard",
+  "version": "1.0.0",
+  "description": "NexGen Dashboard",
+  "main": "Gruntfile.js",
+  "scripts": {
+    "test": "123"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vinhpt07/Dashboard.git"
+  },
+  "author": "vinhpt07@gmail.com",
+  "license": "GPL",
+  "bugs": {
+    "url": "https://github.com/vinhpt07/Dashboard/issues"
+  },
+  "homepage": "https://github.com/vinhpt07/Dashboard#readme",
+  "devDependencies": {
+    "grunt": "^1.0.1",
+    "grunt-contrib-concat": "^1.0.1",
+    "grunt-contrib-jshint": "^1.1.0",
+    "grunt-contrib-qunit": "^1.2.0",
+    "grunt-contrib-uglify": "^2.0.0",
+    "grunt-contrib-watch": "^1.0.0"
+  }
+}
